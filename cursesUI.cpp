@@ -9,7 +9,7 @@ using namespace std;
 
 void scroll_graph(Screen &graph){
     char buf;
-    for(int i=1; i < (graph.width - 1); i++){
+    for(int i=2; i < (graph.width - 1); i++){
         for(int j=1; j < (graph.height- 1); j++){
             buf = graph.read_char(j, i);
             graph.add_char(buf, j, i-1);
@@ -26,13 +26,13 @@ int main(){
 
     bool run = true;
     int x = 1;
-    char c;
-    clock_t start = clock();
+    //char c;
+    //clock_t start = clock();
     clock_t last = clock();
     clock_t now = clock();
     double t_refresh = 0.05;
     double dt;
-    double runt;
+    //double runt;
 
     queue <int> sinlut;
     for(int i=0; i < 1000; i++){
@@ -47,7 +47,7 @@ int main(){
     while(run){
         now = clock();
         dt = (double)(now - last)/(double)(CLOCKS_PER_SEC);
-        runt = (double)(now - start)/(double)(CLOCKS_PER_SEC);
+        //runt = (double)(now - start)/(double)(CLOCKS_PER_SEC);
         // add a new point every 100ms
         if(dt > t_refresh){
             graph.add_char('*', sinlut.front() + (graph.height/2), x);
@@ -62,7 +62,9 @@ int main(){
 
         }
         // quit after 15 seconds
-        if(runt > 15)
+        //if(runt > 15)
+            //run = false;
+        if(sinlut.empty())
             run = false;
     }
 
