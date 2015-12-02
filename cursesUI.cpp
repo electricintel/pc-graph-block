@@ -25,36 +25,35 @@ void scroll_graph(Screen &graph){
     graph.refresh();
 }
 
-void scroll_graph_q(Screen &graph, int*** buffer, int bufsize, int bufpos){
+void scroll_graph_q(Screen &graph, int* buffers[5], int bufsize, int bufpos, bool plot_on[5]){
     int x = 1;
+    for(int i=0; i < graph.height-2; i++){
+        graph.add_char(' ', i, x);
+    }
     for(int i=bufpos+1; i < bufsize; i++){
-        for(int j=0; j < graph.height-2; j++){
-            int color = buffer[i][j][1];
-            if(buffer[i][j][0] == 1){
-                graph.add_char('*', j+1, x, color);
+        for(int j=0; j < 5; j++){
+            if(plot_on[j]){
+                graph.add_char('*', buffers[j][i], x, j);
             }
-            else{
-                graph.add_char(' ', j+1, x);
-            }
+            graph.add_char(' ', buffers[j][i], x+1, j);
         }
         x++;
     }
 
     for(int i=0; i < bufpos; i++){
-        for(int j=0; j < graph.height-2; j++){
-            int color = buffer[i][j][1];
-            if(buffer[i][j][0] == 1){
-                graph.add_char('*', j+1, x, color);
+        for(int j=0; j < 5; j++){
+            if(plot_on[j]){
+                graph.add_char('*', buffers[j][i], x, j);
             }
-            else{
-                graph.add_char(' ', j+1, x);
-            }
+            graph.add_char(' ', buffers[j][i], x+1, j);
         }
         x++;
     }
+
     graph.add_border();
     graph.refresh();
 }
+
 
 int map(int x, int in_min, int in_max, int out_min, int out_max)
 {
@@ -158,18 +157,23 @@ int main(){
 
     int bufwidth = graph.width-2;
     int bufpos = 0;
-    int **head;
+    //int **head;
 
-    int ***buffer = new int**[graph.width-2];
-    for(int i=0; i < graph.width-2; i++){
-        buffer[i] = new int*[graph.height-2];
-        for(int j=0; j < graph.height-2; j++){
-            buffer[i][j] = new int[2];
-            buffer[i][j][0] = 0;
-            buffer[i][j][1] = 0;
-        }
+    int *buffers[5];
+    for(int i=0; i < 5; i++){
+        buffers[i] = new int[graph.width-2];
     }
-    head = buffer[bufpos];
+
+    //int ***buffer = new int**[graph.width-2];
+    //for(int i=0; i < graph.width-2; i++){
+        //buffer[i] = new int*[graph.height-2];
+        //for(int j=0; j < graph.height-2; j++){
+            //buffer[i][j] = new int[2];
+            //buffer[i][j][0] = 0;
+            //buffer[i][j][1] = 0;
+        //}
+    //}
+    //head = buffer[bufpos];
 
     for(int i=0; i < 5; i++)
         plot_on[i] = false;
@@ -185,19 +189,13 @@ int main(){
                 for(int i=0; i < 5; i++){
                     if(plot_on[i]){
                         data[i] = map(data[i], 0, 65535, 2, graph.height-2);
-                        head[data[i]][0] = 1;
-                        head[data[i]][1] = i;
+                        buffers[i][bufpos] = data[i];
                     }
                 }
                 bufpos++;
                 if(bufpos == bufwidth)
                     bufpos = 0;
-                head = buffer[bufpos];
-                for(int j=0; j < graph.height-2; j++){
-                    head[j][0] = 0;
-                    head[j][1] = 0;
-                }
-                scroll_graph_q(graph, buffer, bufwidth, bufpos);
+                scroll_graph_q(graph, buffers, bufwidth, bufpos, plot_on);
 
                 for(int i=0; i < freqadj; i++){
                     getline(dataread, line);
