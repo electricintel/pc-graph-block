@@ -30,12 +30,28 @@ void scroll_graph_q(Screen &graph, int* buffers[5], int bufsize, int bufpos, boo
     for(int i=0; i < graph.height-2; i++){
         graph.add_char(' ', i, x);
     }
+    // turn old stuff off first
+    for(int i=bufpos+1; i < bufsize; i++){
+        for(int j=0; j < 5; j++){
+            graph.add_char(' ', buffers[j][i], x+1, j);
+        }
+        x++;
+    }
+
+    for(int i=0; i < bufpos; i++){
+        for(int j=0; j < 5; j++){
+            graph.add_char(' ', buffers[j][i], x+1, j);
+        }
+        x++;
+    }
+
+    x = 1;
+    // now turn new stuff on
     for(int i=bufpos+1; i < bufsize; i++){
         for(int j=0; j < 5; j++){
             if(plot_on[j]){
                 graph.add_char('*', buffers[j][i], x, j);
             }
-            graph.add_char(' ', buffers[j][i], x+1, j);
         }
         x++;
     }
@@ -45,7 +61,6 @@ void scroll_graph_q(Screen &graph, int* buffers[5], int bufsize, int bufpos, boo
             if(plot_on[j]){
                 graph.add_char('*', buffers[j][i], x, j);
             }
-            graph.add_char(' ', buffers[j][i], x+1, j);
         }
         x++;
     }
