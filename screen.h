@@ -69,6 +69,7 @@ class Screen{
         void add_char(char ch, int y, int x);
         int height;
         int width;
+        char read_char(int y, int x);
 
     private:
         WINDOW* win;

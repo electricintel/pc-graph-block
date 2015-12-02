@@ -82,3 +82,7 @@ void Screen::add_char(char ch, int y, int x){
     wmove(win, y, x);
     waddch(win, ch);
 }
+
+char Screen::read_char(int y, int x){
+    return mvwinch(win, y, x);
+}
