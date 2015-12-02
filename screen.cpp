@@ -7,14 +7,15 @@
 #include <curses.h>
 #include "screen.h"
 
-void Screen::add_line(std::string line, int offset){
-    if(cur_line > 25){
-        waddstr(win, "\n");
-    }
-    wmove(win, cur_line + offset, 0);
+void Screen::add_line(std::string line, int offset, int col){
+    //if(cur_line > 25){
+        //waddstr(win, "\n");
+    //}
+    wattron(win, COLOR_PAIR(col));
+    wmove(win, offset, 0);
     waddstr(win, line.c_str());
     getyx(win, last_pos[0], last_pos[1]);
-    cur_line += 1 + offset;
+    wattroff(win, COLOR_PAIR(col));
     wrefresh(win);
 }
 
@@ -36,12 +37,13 @@ void Screen::clear(){
 char Screen::get_char(bool block){
     echosw(true);
     if(block)
-        nodelay(stdscr, false);
+        nodelay(win, false);
     else
-        nodelay(stdscr, true);
+        nodelay(win, true);
     echosw(false);
 
-    return wgetch(win);
+    return mvwgetch(win,0,0);
+    //return getch();
 }
 
 void Screen::echosw(bool status){
@@ -78,9 +80,11 @@ void Screen::add_char(char ch){
     waddch(win, ch);
 }
 
-void Screen::add_char(char ch, int y, int x){
+void Screen::add_char(char ch, int y, int x, int col){
+    wattron(win, COLOR_PAIR(col));
     wmove(win, y, x);
     waddch(win, ch);
+    wattroff(win, COLOR_PAIR(col));
 }
 
 char Screen::read_char(int y, int x){

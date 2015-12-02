@@ -16,8 +16,15 @@ class Screen{
         Screen(){
             // initialize ncurses screen
             initscr();
+            start_color();
             cbreak();
             noecho();
+
+            init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+            init_pair(2, COLOR_RED, COLOR_BLACK);
+            init_pair(3, COLOR_GREEN, COLOR_BLACK);
+            init_pair(4, COLOR_BLUE, COLOR_BLACK);
+            init_pair(5, COLOR_WHITE, COLOR_BLACK);
 
             int h, w;
             getmaxyx(stdscr, h, w);
@@ -31,9 +38,18 @@ class Screen{
         Screen(int h, int w, int off_y, int off_x){
             // initialize ncurses screen
             initscr();
+            start_color();
             cbreak();
             noecho();
+            //nodelay(stdscr, true);
             curs_set(0);
+
+            init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+            init_pair(2, COLOR_RED, COLOR_BLACK);
+            init_pair(3, COLOR_GREEN, COLOR_BLACK);
+            init_pair(4, COLOR_BLUE, COLOR_BLACK);
+            init_pair(5, COLOR_WHITE, COLOR_BLACK);
+
             int maxh, maxw;
             getmaxyx(stdscr, maxh, maxw);
 
@@ -56,7 +72,7 @@ class Screen{
         void add_border();
         void destroy();
         void cur_print(std::string line, int offset=0);
-        void add_line(std::string line, int offset = 0);
+        void add_line(std::string line, int offset = 0, int col = 0);
         void refresh(bool reset=true);
         void clear();
         void echosw(bool status);
@@ -66,7 +82,7 @@ class Screen{
         int last_pos[2];
         void last_print(std::string line);
         void add_char(char ch);
-        void add_char(char ch, int y, int x);
+        void add_char(char ch, int y, int x, int col = 0);
         int height;
         int width;
         char read_char(int y, int x);
