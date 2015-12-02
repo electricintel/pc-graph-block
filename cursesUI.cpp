@@ -35,14 +35,15 @@ int main(){
     //double runt;
 
     queue <int> sinlut;
-    for(int i=0; i < 1000; i++){
-        sinlut.push(10*sin(.1 * i));
-    }
 
     // init curses screen, height: maxh - 5, width: maxw - 2
     Screen graph = Screen(-5, -2, 0, 0);
     graph.add_border();
     graph.refresh();
+
+    for(int i=0; i < 1000; i++){
+        sinlut.push(((graph.height-2)/2)*sin(.1 * i));
+    }
 
     while(run){
         now = clock();
