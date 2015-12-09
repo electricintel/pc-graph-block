@@ -8,7 +8,7 @@
 #include <queue>
 #include <string.h>
 #include "screen.h"
-#include "blocking_reader.h"
+//#include "blocking_reader.h"
 using namespace std;
 
 // doesn't keep colors
@@ -201,10 +201,10 @@ int main(){
     static boost::asio::io_service ios;
     boost::asio::serial_port sp(ios, "/dev/ttyUSB0");
 	sp.set_option(boost::asio::serial_port::baud_rate(115200));
-    blocking_reader reader(sp, 100);
+    //blocking_reader reader(sp, 100);
 	// You can set other options using similar syntax
 	char tmp[200];
-	//int length = sp.read_some(boost::asio::buffer(tmp));
+    //int length = sp.read_some(boost::asio::buffer(tmp));
 	// process the info received
 	//std::string message = "hello, world";
 	//sp.write_some(boost::asio::buffer(message));
@@ -215,17 +215,19 @@ int main(){
         // add a new point every 100ms
         if(dt > t_refresh){
             getline(dataread, line);
+            line += "\n";
 
             sp.write_some(boost::asio::buffer(line));
             //sp.async_read(boost::asio::buffer(tmp));
-            char c = 0x00;
-            string resp = "";
-            while(reader.read_char(c) && c != '\n'){
-                resp += c;
-            }
-            resp += "\n";
+            int length = sp.read_some(boost::asio::buffer(tmp));
+            //char c = 0x00;
+            //string resp = "";
+            //while(reader.read_char(c) && c != '\n'){
+                //resp += c;
+            //}
+            //resp += "\n";
 
-            if( sscanf(resp.c_str(), "%d,%d,%d,%d,%d\n", &data[0], &data[1], &data[2], &data[3], &data[4]) != 5){
+            if( sscanf(tmp, "%d,%d,%d,%d,%d\n", &data[0], &data[1], &data[2], &data[3], &data[4]) != 5){
                 for(int i=0; i < 5; i++){
                     data[i] = 0;
                 }
