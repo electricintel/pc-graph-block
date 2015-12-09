@@ -1,4 +1,5 @@
 #include <iostream>
+#include <boost/asio.hpp>
 #include <fstream>
 #include <stdlib.h>
 #include <ctime>
@@ -7,6 +8,7 @@
 #include <queue>
 #include <string.h>
 #include "screen.h"
+#include "blocking_reader.h"
 using namespace std;
 
 // doesn't keep colors
@@ -70,9 +72,11 @@ void scroll_graph_q(Screen &graph, int* buffers[5], int bufsize, int bufpos, boo
 }
 
 
-int map(int x, int in_min, int in_max, int out_min, int out_max)
-{
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+namespace custom{
+    int map(int x, int in_min, int in_max, int out_min, int out_max)
+    {
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    }
 }
 
 void redraw_info(Screen &info, bool* plot_on){
@@ -104,19 +108,19 @@ void redraw_info(Screen &info, bool* plot_on){
 }
 
 void legend_init(Screen &legend, int height){
-    legend.add_line("75V", height - map(75, 0, 75, 0, height));
-    legend.add_line("70V", height - map(70, 0, 75, 0, height));
-    legend.add_line("60V", height - map(60, 0, 75, 0, height));
-    legend.add_line("50V", height - map(50, 0, 75, 0, height));
-    legend.add_line("40V", height - map(40, 0, 75, 0, height));
-    legend.add_line("30V", height - map(30, 0, 75, 0, height));
-    legend.add_line("20V", height - map(20, 0, 75, 0, height));
-    legend.add_line("10V", height - map(10, 0, 75, 0, height));
+    legend.add_line("75V", height - custom::map(75, 0, 75, 0, height));
+    legend.add_line("70V", height - custom::map(70, 0, 75, 0, height));
+    legend.add_line("60V", height - custom::map(60, 0, 75, 0, height));
+    legend.add_line("50V", height - custom::map(50, 0, 75, 0, height));
+    legend.add_line("40V", height - custom::map(40, 0, 75, 0, height));
+    legend.add_line("30V", height - custom::map(30, 0, 75, 0, height));
+    legend.add_line("20V", height - custom::map(20, 0, 75, 0, height));
+    legend.add_line("10V", height - custom::map(10, 0, 75, 0, height));
 
-    legend.add_line("20A", height - map(20, 0, 20, 0, height -1), 3);
-    legend.add_line("15A", height - map(15, 0, 20, 0, height), 3);
-    legend.add_line("10A", height - map(10, 0, 20, 0, height), 3);
-    legend.add_line(" 5A", height - map(5, 0, 20, 0, height), 3);
+    legend.add_line("20A", height - custom::map(20, 0, 20, 0, height -1), 3);
+    legend.add_line("15A", height - custom::map(15, 0, 20, 0, height), 3);
+    legend.add_line("10A", height - custom::map(10, 0, 20, 0, height), 3);
+    legend.add_line(" 5A", height - custom::map(5, 0, 20, 0, height), 3);
     legend.refresh();
 }
 
@@ -194,28 +198,54 @@ int main(){
         plot_on[i] = false;
     plot_on[0] = true;
 
+    static boost::asio::io_service ios;
+    boost::asio::serial_port sp(ios, "/dev/ttyUSB0");
+	sp.set_option(boost::asio::serial_port::baud_rate(115200));
+    blocking_reader reader(sp, 100);
+	// You can set other options using similar syntax
+	char tmp[200];
+	//int length = sp.read_some(boost::asio::buffer(tmp));
+	// process the info received
+	//std::string message = "hello, world";
+	//sp.write_some(boost::asio::buffer(message));
+
     while(run){
         now = clock();
         dt = (double)(now - last)/(double)(CLOCKS_PER_SEC);
         // add a new point every 100ms
         if(dt > t_refresh){
             getline(dataread, line);
-            if( sscanf(line.c_str(), "%d,%d,%d,%d,%d\n", &data[0], &data[1], &data[2], &data[3], &data[4]) == 5){
-                for(int i=0; i < 5; i++){
-                    if(plot_on[i]){
-                        data[i] = map(data[i], 0, 65535, 2, graph.height-2);
-                        buffers[i][bufpos] = data[i];
-                    }
-                }
-                bufpos++;
-                if(bufpos == bufwidth)
-                    bufpos = 0;
-                scroll_graph_q(graph, buffers, bufwidth, bufpos, plot_on);
 
-                for(int i=0; i < freqadj; i++){
-                    getline(dataread, line);
+            sp.write_some(boost::asio::buffer(line));
+            //sp.async_read(boost::asio::buffer(tmp));
+            char c = 0x00;
+            string resp = "";
+            while(reader.read_char(c) && c != '\n'){
+                resp += c;
+            }
+            resp += "\n";
+
+            if( sscanf(resp.c_str(), "%d,%d,%d,%d,%d\n", &data[0], &data[1], &data[2], &data[3], &data[4]) != 5){
+                for(int i=0; i < 5; i++){
+                    data[i] = 0;
                 }
             }
+
+            for(int i=0; i < 5; i++){
+                if(plot_on[i]){
+                    data[i] = custom::map(data[i], 0, 65535, 2, graph.height-2);
+                    buffers[i][bufpos] = data[i];
+                }
+            }
+            bufpos++;
+            if(bufpos == bufwidth)
+                bufpos = 0;
+            scroll_graph_q(graph, buffers, bufwidth, bufpos, plot_on);
+
+            for(int i=0; i < freqadj; i++){
+                getline(dataread, line);
+            }
+
             last = clock();
 
             redraw_info(info, plot_on);
@@ -251,6 +281,7 @@ int main(){
     dataread.close();
     graph.destroy();
     info.destroy();
+    sp.close();
     return 0;
 
 }
